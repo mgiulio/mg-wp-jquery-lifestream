@@ -28,18 +28,18 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	
 	function setup_settings() {
 		add_settings_section(
-			'jls_section_services', 
+			'jls_services', 
 			'Services', 
 			array($this, 'services_desc'),
 			$this->menu_slug
 		);
 		
 		add_settings_field(
-			"jls[services][twitter][user]",
+			"jls_services_twitter_user",
 			'Twitter',
 			array($this, 'render_twitter'),
 			$this->menu_slug,
-			'jls_section_services'
+			'jls_services'
 		);
 
 		register_setting(
@@ -54,7 +54,6 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	function render_twitter() {
-		//id="..."
 		$cfg = get_option('jls');
 		$service_cfg = $cfg['services']['twitter'];
 		$user = $service_cfg['user'];

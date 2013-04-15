@@ -17,7 +17,8 @@ abstract class mgJQueryLifestreamBase {
 			'js' => "{$pdu}js/"
 		);
 		$this->path = array(
-			'plugin' => $pdp
+			'plugin' => $pdp,
+			'js' => "{$pdp}js/"
 		);
 	}
 	
@@ -47,6 +48,16 @@ abstract class mgJQueryLifestreamBase {
 		
 		if (!empty($params))
 			wp_localize_script($js_handle, $this->plugin_prefix . 'args', $params);
+	}
+	
+	protected function log($x) {
+		if (WP_DEBUG === true) {
+			if (is_array($x) || is_object($x)) {
+				error_log('Utils::log:' . print_r($x, true));
+			} else {
+				error_log('Utils::log:' . $x);
+			}
+		}
 	}
 	
 }

@@ -14,15 +14,55 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		
 		add_action('admin_init', array($this, 'setup_settings'));
 		add_action('admin_menu', array($this, 'setup_menu'));
-		
+		add_action('pre_update_option_jls', array($this, 'regenerate_js'), 10, 2);
 		add_shortcode('jls', array($this, 'run_shortcode'));
+	}
+	
+	function regenerate_js($new_value, $old_value) {
+		$services = $new_value['services'];
+		$service_list = array();
+		foreach ($services as $s_name => $s_cfg) {
+			if (empty($s_cfg['user']))
+				continue;
+			$service_list[] = array(
+				'service' => $s_name,
+				'user' => $s_cfg['user']
+			);
+		}
+		
+		if (empty($service_list))
+			$new_value['no_services'] = true;
+		else {
+			$new_value['no_services'] = false;
+			
+			$js_service_list = json_encode($service_list);
+			
+			ob_start();
+			?>
+				(function($) {
+					$(function() {
+						$('.jls_container').lifestream({
+							list: <?php echo $js_service_list; ?>,
+						});
+				
+					});
+				})(jQuery);
+			<?php
+			$js_src = ob_get_contents();
+			ob_end_clean();
+			
+			file_put_contents("{$this->path['js']}run_jls.js", $js_src);
+		}
+		
+		return $new_value;
 	}
 	
 	private function install_option() {
 		if (get_option('jls'))
 			return;
 		
-		update_option('jls', array(
+		add_option('jls', array(
+			'no_services' => true,
 			'services' => array(
 				'bitbucket' => array('user' => ''),
 				'bitly' => array('user' => ''),
@@ -37,6 +77,8 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 				'flickr' => array('user' => ''),
 				'foomark' => array('user' => ''),
 				'formspring' => array('user' => ''),
+				'github' => array('user' => ''),
+				'twitter' => array('user' => ''),
 			)
 		));
 	}
@@ -104,6 +146,10 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	function run_shortcode() {
+		$cfg = get_option('jls');
+		if ($cfg['no_services'])
+			return '';
+			
 		$jsl_handle = $this->plugin_prefix . 'jls_js';
 		wp_enqueue_script(
 			$jsl_handle,

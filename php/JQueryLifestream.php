@@ -12,10 +12,14 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		$this->menu_slug = 'jls';
 		$this->settings_group = $this->menu_slug;
 		
-		add_action('admin_init', array($this, 'setup_settings'));
-		add_action('admin_menu', array($this, 'setup_menu'));
-		add_action('pre_update_option_jls', array($this, 'regenerate_js'), 10, 2);
-		add_shortcode('jls', array($this, 'run_shortcode'));
+		if (is_admin()) {
+			add_action('admin_init', array($this, 'setup_settings'));
+			add_action('admin_menu', array($this, 'setup_menu'));
+			add_action('pre_update_option_jls', array($this, 'regenerate_js'), 10, 2);
+		}
+		else {
+			add_shortcode('jls', array($this, 'run_shortcode'));
+		}
 	}
 	
 	function regenerate_js($new_value, $old_value) {

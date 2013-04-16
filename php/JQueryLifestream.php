@@ -47,7 +47,8 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 				(function($) {
 					$(function() {
 						$('.jls_container').lifestream({
-							list: <?php echo $js_service_list; ?>,
+							limit: <?php echo $new_value['limit']; ?>,
+							list: <?php echo $js_service_list; ?>
 						});
 				
 					});
@@ -67,6 +68,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		
 		add_option('jls', array(
 			'no_services' => true,
+			'limit' => 10,
 			'services' => array(
 				'bitbucket' => array('user' => ''),
 				'bitly' => array('user' => ''),
@@ -103,7 +105,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 			'jls'//,
 			//array($this, $validation)
 		);
-		
+	
 		add_settings_section(
 			'jls_services', 
 			'Services', 
@@ -123,6 +125,25 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 				'jls_services'
 			);
 		}
+		
+		add_settings_section(
+			'jls_misc', 
+			'Misc', 
+			array($this, 'misc_desc'),
+			$this->menu_slug
+		);
+		
+		add_settings_field(
+			'jls_limit',
+			'limit',
+			array($this, 'render_limit'),
+			$this->menu_slug,
+			'jls_misc'
+		);
+	}
+	
+	function misc_desc() {
+		echo "General settings";
 	}
 	
 	function services_desc() {
@@ -165,6 +186,17 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		$html = '<div class="jls_container"></div>';
 		
 		return $html;
+	}
+	
+	function render_limit() {
+		$cfg = get_option('jls');
+		?>
+			<input 
+				name="jls[limit]" 
+				type="text" 
+				value="<?php echo $cfg['limit']; ?>"
+			>
+		<?php
 	}
 	
 }

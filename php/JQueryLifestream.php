@@ -25,6 +25,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	function regenerate_js($new_value, $old_value) {
 		$services = $new_value['services'];
 		$service_list = array();
+		$out = '';
 		foreach ($services as $s_name => $s_cfg) {
 			if (empty($s_cfg['user']))
 				continue;
@@ -32,15 +33,15 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 				'service' => $s_name,
 				'user' => $s_cfg['user']
 			);
+			$out .= file_get_contents("{$this->path['js']}jls/src/services/{$s_name}.js");
 		}
 		
 		if (empty($service_list))
 			$new_value['no_services'] = true;
 		else {
 			$new_value['no_services'] = false;
-			
+			$out = file_get_contents("{$this->path['js']}jls/src/core.js") . $out;
 			$js_service_list = json_encode($service_list);
-			
 			ob_start();
 			?>
 				(function($) {
@@ -52,10 +53,9 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 					});
 				})(jQuery);
 			<?php
-			$js_src = ob_get_contents();
+			$out .= ob_get_contents();
 			ob_end_clean();
-			
-			file_put_contents("{$this->path['js']}run_jls.js", $js_src);
+			file_put_contents("{$this->path['js']}jls.js", $out);
 		}
 		
 		return $new_value;
@@ -154,18 +154,10 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		if ($cfg['no_services'])
 			return '';
 			
-		$jsl_handle = $this->plugin_prefix . 'jls_js';
 		wp_enqueue_script(
-			$jsl_handle,
-			"{$this->url['js']}jls/jquery.lifestream.min.js",
-			array('jquery'), 
-			'', 
-			true
-		);
-		wp_enqueue_script(
-			$this->plugin_prefix . 'run_jls_js',
-			"{$this->url['js']}run_jls.js",
-			array($jsl_handle), 
+			$this->plugin_prefix . 'jls_js',
+			"{$this->url['js']}jls.js",
+			array(),
 			'', 
 			true
 		);

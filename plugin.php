@@ -11,4 +11,4 @@ License: GPLv2
 */
 
 require_once 'php/JQueryLifestream.php';
-new mgJQueryLifestream();
+$mgWPJSL = new mgJQueryLifestream();

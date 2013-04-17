@@ -12,6 +12,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		$this->menu_slug = 'jls';
 		$this->settings_group = $this->menu_slug;
 		
+		add_action('widgets_init', array($this, 'register_widget'));
 		if (is_admin()) {
 			add_action('admin_init', array($this, 'setup_settings'));
 			add_action('admin_menu', array($this, 'setup_menu'));
@@ -20,6 +21,11 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		else {
 			add_shortcode('jls', array($this, 'run_shortcode'));
 		}
+	}
+	
+	function register_widget() {
+		require_once 'Widget.php';
+		register_widget('JLSWidget');
 	}
 	
 	function regenerate_js($new_value, $old_value) {
@@ -171,6 +177,10 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	function run_shortcode() {
+		return $this->render_lifestream();
+	}
+	
+	function render_lifestream() {
 		$cfg = get_option('jls');
 		if ($cfg['no_services'])
 			return '';

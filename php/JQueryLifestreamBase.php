@@ -8,6 +8,10 @@ abstract class mgJQueryLifestreamBase {
 
 	function __construct($cfg) {
 		$this->plugin_prefix = strtolower(get_class($this)) . '_';
+		$this->plugin_option_name = rtrim($this->plugin_prefix, '_');
+		
+		$main_plugin_file = 'mg-wp-jquery-lifestream/plugin.php';
+		register_activation_hook($main_plugin_file, array($this, 'on_activation'));
 		
 		$d = dirname(__FILE__);
 		$pdu = plugin_dir_url($d);
@@ -20,6 +24,13 @@ abstract class mgJQueryLifestreamBase {
 			'plugin' => $pdp,
 			'js' => "{$pdp}js/"
 		);
+	}
+	
+	function on_activation() {
+		if (!get_option($this->plugin_option_name)) {
+			add_option($this->plugin_option_name, array());
+			$this->on_installation();
+		}
 	}
 	
 	protected function add_action($wp_action_string, $method, $priority = 10, $accepted_args = 1) {

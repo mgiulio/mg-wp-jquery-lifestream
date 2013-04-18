@@ -135,8 +135,8 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	function setup_settings() {
 		register_setting(
 			$this->settings_group, 
-			'jls'//,
-			//array($this, $validation)
+			'jls',
+			array($this, 'validate')
 		);
 	
 		add_settings_section(
@@ -234,6 +234,20 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 				value="<?php echo $cfg['limit']; ?>"
 			>
 		<?php
+	}
+	
+	function validate($cfg) {
+		$out = array();
+		
+		$out['limit'] = absint($cfg['limit']);
+		if ($out['limit'] < 1 || $out['limit'] > 1000) {
+			$out['limit'] = 10;
+			add_settings_error(...);
+		}
+
+		$out = $cfg;
+		
+		return $out;
 	}
 	
 }

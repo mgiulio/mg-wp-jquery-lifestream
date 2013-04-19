@@ -10,6 +10,8 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		$this->menu_slug = 'jls';
 		$this->settings_group = $this->menu_slug;
 		
+		return;
+		
 		add_action('widgets_init', array($this, 'register_widget'));
 		if (is_admin()) {
 			add_action('admin_init', array($this, 'setup_settings'));
@@ -22,11 +24,13 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	function on_installation() {
-		if (!$this->check_requirements()) {
-			// TODO
+		$errs = $this->check_requirements();
+		if (!empty($errs)) {
+			trigger_error(implode($errs, '\n'), E_USER_ERROR);
+			return;
 		}
 		
-		$this->setup_default_options();
+		//$this->setup_default_options();
 	}
 	
 	private function setup_default_options() {
@@ -81,7 +85,17 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	private function check_requirements() {
-		return true;
+		$errMsgs = array();
+		
+		// WP version check
+		if (true)
+			$errMsgs[] = 'WP version not met';
+			
+		// PHP version
+		if (true)
+			$errMsgs[] = 'PHP version not met';
+			
+		return $errMsgs;
 	}
 	
 	function register_widget() {

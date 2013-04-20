@@ -10,8 +10,6 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		$this->menu_slug = 'jls';
 		$this->settings_group = $this->menu_slug;
 		
-		return;
-		
 		add_action('widgets_init', array($this, 'register_widget'));
 		if (is_admin()) {
 			add_action('admin_init', array($this, 'setup_settings'));
@@ -24,17 +22,17 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	function on_installation() {
-		$errs = $this->check_requirements();
-		if (!empty($errs)) {
-			trigger_error(implode($errs, '\n'), E_USER_ERROR);
+		$ok = $this->check_requirements();
+		if (!is_wp_error($ok))
+			$this->setup_default_options();
+		else {
+			trigger_error('Failed requirements: ' .implode($ok->get_error_messages(), '. '), E_USER_ERROR);
 			return;
 		}
-		
-		//$this->setup_default_options();
 	}
 	
 	private function setup_default_options() {
-		update_option($this->plugin_option_name, array(
+		$this->update_option(array(
 			'no_services' => true,
 			'limit' => 10,
 			'services' => array(
@@ -85,17 +83,24 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	private function check_requirements() {
-		$errMsgs = array();
+		$err_msgs = array();
 		
 		// WP version check
-		if (true)
-			$errMsgs[] = 'WP version not met';
+		if (version_compare(get_bloginfo('version'), '3.0', '<'))
+			$err_msgs[] = 'WordPress 3.0 or later';
 			
 		// PHP version
-		if (true)
-			$errMsgs[] = 'PHP version not met';
+		if (version_compare(phpversion(), '5.2.4' , '<'))
+			$err_msgs[] = 'PHP 5.2.4 or later';
 			
-		return $errMsgs;
+		if (empty($err_msgs))
+			return true;
+		
+		$wp_err = new WP_Error();
+		$c = 0;
+		foreach ($err_msgs as $m)
+			$wp_err->add($c++, $m);
+		return $wp_err;
 	}
 	
 	function register_widget() {
@@ -167,7 +172,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 			$this->menu_slug
 		);
 		
-		$cfg = get_option($this->plugin_option_name);
+		$cfg = $this->get_option();
 		$services = $cfg['services'];
 		foreach ($services as $service_name => $service_cfg) {
 			$service_renderer = new ServiceRenderer($service_name, $service_cfg);
@@ -229,7 +234,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	function render_lifestream() {
-		$cfg = get_option($this->plugin_option_name);
+		$cfg = $this->get_option();
 		if ($cfg['no_services'])
 			return '';
 			
@@ -247,7 +252,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	function render_limit() {
-		$cfg = get_option($this->plugin_option_name);
+		$cfg = $this->get_option();
 		?>
 			<input 
 				name="jls[limit]" 

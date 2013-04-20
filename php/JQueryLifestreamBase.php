@@ -27,14 +27,22 @@ abstract class mgJQueryLifestreamBase {
 	}
 	
 	function on_activation() {
-		if (!get_option($this->plugin_option_name)) {
-			add_option($this->plugin_option_name, array());
+		if (!$this->get_option()) {
 			$this->on_installation();
+			add_option($this->plugin_option_name, array());
 		}
 	}
 	
 	protected function add_action($wp_action_string, $method, $priority = 10, $accepted_args = 1) {
 		add_action($wp_action_string, array($this, $method), $priority, $accepted_args);
+	}
+	
+	protected function update_option($value) {
+		return update_option($this->plugin_option_name, $value);
+	}
+	
+	protected function get_option() {
+		return get_option($this->plugin_option_name);
 	}
 	
 	protected function is_ajax_request($action) {

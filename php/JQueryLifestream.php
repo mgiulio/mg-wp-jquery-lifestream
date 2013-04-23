@@ -15,10 +15,17 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 			add_action('admin_init', array($this, 'setup_settings'));
 			add_action('admin_menu', array($this, 'setup_menu'));
 			add_action('pre_update_option_jls', array($this, 'regenerate_js'), 10, 2);
+			add_filter("plugin_action_links_{$this->main_plugin_file}", array($this, 'setup_plugin_action_links'));
 		}
 		else {
 			add_shortcode('jls', array($this, 'run_shortcode'));
 		}
+	}
+	
+	function setup_plugin_action_links($actions) {
+		$actions['Settings'] = "<a href=\"{$this->settings_page_url}\" title=\"Configure the lifestream\">Settings</a>"; 
+		
+		return $actions;
 	}
 	
 	function on_installation() {
@@ -156,6 +163,8 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 			$this->menu_slug,
 			array($this, 'render_menu_page')
 		);
+		
+		$this->settings_page_url = admin_url("options-general.php?page={$this->menu_slug}");
 	}
 	
 	function setup_settings() {

@@ -5,13 +5,14 @@ abstract class mgJQueryLifestreamBase {
 	protected $plugin_prefix;
 	protected $url = array();
 	protected $path = array();
+	protected $main_plugin_file;
 
 	function __construct($cfg) {
 		$this->plugin_prefix = strtolower(get_class($this)) . '_';
 		$this->plugin_option_name = rtrim($this->plugin_prefix, '_');
 		
-		$main_plugin_file = 'mg-wp-jquery-lifestream/plugin.php';
-		register_activation_hook($main_plugin_file, array($this, 'on_activation'));
+		$this->main_plugin_file = 'mg-wp-jquery-lifestream/plugin.php';
+		register_activation_hook($this->main_plugin_file, array($this, 'on_activation'));
 		
 		$d = dirname(__FILE__);
 		$pdu = plugin_dir_url($d);

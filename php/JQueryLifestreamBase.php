@@ -5,9 +5,14 @@ abstract class mgJQueryLifestreamBase {
 	protected $plugin_prefix;
 	protected $url = array();
 	protected $path = array();
+	protected $main_plugin_file;
 
 	function __construct($cfg) {
 		$this->plugin_prefix = strtolower(get_class($this)) . '_';
+		$this->plugin_option_name = rtrim($this->plugin_prefix, '_');
+		
+		$this->main_plugin_file = 'mg-wp-jquery-lifestream/plugin.php';
+		register_activation_hook($this->main_plugin_file, array($this, 'on_activation'));
 		
 		$d = dirname(__FILE__);
 		$pdu = plugin_dir_url($d);
@@ -22,8 +27,23 @@ abstract class mgJQueryLifestreamBase {
 		);
 	}
 	
+	function on_activation() {
+		if (!$this->get_option()) {
+			$this->on_installation();
+			add_option($this->plugin_option_name, array());
+		}
+	}
+	
 	protected function add_action($wp_action_string, $method, $priority = 10, $accepted_args = 1) {
 		add_action($wp_action_string, array($this, $method), $priority, $accepted_args);
+	}
+	
+	protected function update_option($value) {
+		return update_option($this->plugin_option_name, $value);
+	}
+	
+	protected function get_option() {
+		return get_option($this->plugin_option_name);
 	}
 	
 	protected function is_ajax_request($action) {

@@ -7,8 +7,6 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	function __construct() {
 		parent::__construct(array());
 		
-		$this->install_option();
-		
 		$this->menu_slug = 'jls';
 		$this->settings_group = $this->menu_slug;
 		
@@ -17,62 +15,31 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 			add_action('admin_init', array($this, 'setup_settings'));
 			add_action('admin_menu', array($this, 'setup_menu'));
 			add_action('pre_update_option_jls', array($this, 'regenerate_js'), 10, 2);
+			add_filter("plugin_action_links_{$this->main_plugin_file}", array($this, 'setup_plugin_action_links'));
 		}
 		else {
 			add_shortcode('jls', array($this, 'run_shortcode'));
 		}
 	}
 	
-	function register_widget() {
-		require_once 'Widget.php';
-		register_widget('JLSWidget');
+	function setup_plugin_action_links($actions) {
+		$actions['Settings'] = "<a href=\"{$this->settings_page_url}\" title=\"Configure the lifestream\">Settings</a>"; 
+		
+		return $actions;
 	}
 	
-	function regenerate_js($new_value, $old_value) {
-		$services = $new_value['services'];
-		$service_list = array();
-		$out = '';
-		foreach ($services as $s_name => $s_cfg) {
-			if (empty($s_cfg['user']))
-				continue;
-			$service_list[] = array(
-				'service' => $s_name,
-				'user' => $s_cfg['user']
-			);
-			$out .= file_get_contents("{$this->path['js']}jls/src/services/{$s_name}.js");
-		}
-		
-		if (empty($service_list))
-			$new_value['no_services'] = true;
+	function on_installation() {
+		$ok = $this->check_requirements();
+		if (!is_wp_error($ok))
+			$this->setup_default_options();
 		else {
-			$new_value['no_services'] = false;
-			$out = file_get_contents("{$this->path['js']}jls/src/core.js") . $out;
-			$js_service_list = json_encode($service_list);
-			ob_start();
-			?>
-				(function($) {
-					$(function() {
-						$('.jls_container').lifestream({
-							limit: <?php echo $new_value['limit']; ?>,
-							list: <?php echo $js_service_list; ?>
-						});
-				
-					});
-				})(jQuery);
-			<?php
-			$out .= ob_get_contents();
-			ob_end_clean();
-			file_put_contents("{$this->path['js']}jls.js", $out);
+			trigger_error('Failed requirements: ' .implode($ok->get_error_messages(), '. '), E_USER_ERROR);
+			return;
 		}
-		
-		return $new_value;
 	}
 	
-	private function install_option() {
-		if (get_option('jls'))
-			return;
-		
-		add_option('jls', array(
+	private function setup_default_options() {
+		$this->update_option(array(
 			'no_services' => true,
 			'limit' => 10,
 			'services' => array(
@@ -122,6 +89,72 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		));
 	}
 	
+	private function check_requirements() {
+		$err_msgs = array();
+		
+		// WP version check
+		if (version_compare(get_bloginfo('version'), '3.0', '<'))
+			$err_msgs[] = 'WordPress 3.0 or later';
+			
+		// PHP version
+		if (version_compare(phpversion(), '5.2.4' , '<'))
+			$err_msgs[] = 'PHP 5.2.4 or later';
+			
+		if (empty($err_msgs))
+			return true;
+		
+		$wp_err = new WP_Error();
+		$c = 0;
+		foreach ($err_msgs as $m)
+			$wp_err->add($c++, $m);
+		return $wp_err;
+	}
+	
+	function register_widget() {
+		require_once 'Widget.php';
+		register_widget('JLSWidget');
+	}
+	
+	function regenerate_js($new_value, $old_value) {
+		$services = $new_value['services'];
+		$service_list = array();
+		$out = '';
+		foreach ($services as $s_name => $s_cfg) {
+			if (empty($s_cfg['user']))
+				continue;
+			$service_list[] = array(
+				'service' => $s_name,
+				'user' => $s_cfg['user']
+			);
+			$out .= file_get_contents("{$this->path['js']}jls/src/services/{$s_name}.js");
+		}
+		
+		if (empty($service_list))
+			$new_value['no_services'] = true;
+		else {
+			$new_value['no_services'] = false;
+			$out = file_get_contents("{$this->path['js']}jls/src/core.js") . $out;
+			$js_service_list = json_encode($service_list);
+			ob_start();
+			?>
+				(function($) {
+					$(function() {
+						$('.jls_container').lifestream({
+							limit: <?php echo $new_value['limit']; ?>,
+							list: <?php echo $js_service_list; ?>
+						});
+				
+					});
+				})(jQuery);
+			<?php
+			$out .= ob_get_contents();
+			ob_end_clean();
+			file_put_contents("{$this->path['js']}jls.js", $out);
+		}
+		
+		return $new_value;
+	}
+	
 	function setup_menu() {
 		add_options_page(
 			'jQuery Lifestream',
@@ -130,12 +163,14 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 			$this->menu_slug,
 			array($this, 'render_menu_page')
 		);
+		
+		$this->settings_page_url = admin_url("options-general.php?page={$this->menu_slug}");
 	}
 	
 	function setup_settings() {
 		register_setting(
 			$this->settings_group, 
-			'jls',
+			$this->plugin_option_name
 			array($this, 'validate')
 		);
 	
@@ -146,7 +181,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 			$this->menu_slug
 		);
 		
-		$cfg = get_option('jls');
+		$cfg = $this->get_option();
 		$services = $cfg['services'];
 		foreach ($services as $service_name => $service_cfg) {
 			$service_renderer = new ServiceRenderer($service_name, $service_cfg);
@@ -208,7 +243,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	function render_lifestream() {
-		$cfg = get_option('jls');
+		$cfg = $this->get_option();
 		if ($cfg['no_services'])
 			return '';
 			
@@ -226,7 +261,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	function render_limit() {
-		$cfg = get_option('jls');
+		$cfg = $this->get_option();
 		?>
 			<input 
 				name="jls[limit]" 

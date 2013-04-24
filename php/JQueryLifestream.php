@@ -292,6 +292,19 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 				'Limit must be an integer in the range [1, 1000]',
 				'error'
 			);
+			
+		foreach ($out['services'] as $service_name => $service_cfg) {
+			$user = $in['services'][$service_name]['user'];
+			if ($this->validate_service[$service_name]($user))
+				$out['services'][$service_name]['user'] = $user;
+			else
+				add_settings_error(
+					"jls_services_{$service_name}_user",
+					"jls_services_{$service_name}_user",
+					"$user is not a valide user for service $service_name",
+					'error'
+				);
+		}
 		
 		return $out;
 	}

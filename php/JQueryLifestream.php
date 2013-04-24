@@ -24,7 +24,6 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	
 	function setup_plugin_action_links($actions) {
 		$actions['Settings'] = "<a href=\"{$this->settings_page_url}\" title=\"Configure the lifestream\">Settings</a>"; 
-		
 		return $actions;
 	}
 	
@@ -170,7 +169,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	function setup_settings() {
 		register_setting(
 			$this->settings_group, 
-			$this->plugin_option_name
+			$this->plugin_option_name,
 			array($this, 'validate')
 		);
 	
@@ -193,6 +192,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 				'jls_services'
 			);
 		}
+		ServiceRenderer::$plugin_option_name = $this->plugin_option_name;
 		
 		add_settings_section(
 			'jls_misc', 
@@ -264,23 +264,39 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		$cfg = $this->get_option();
 		?>
 			<input 
-				name="jls[limit]" 
+				name="<?php echo $this->plugin_option_name; ?>[limit]" 
 				type="text" 
 				value="<?php echo $cfg['limit']; ?>"
 			>
 		<?php
 	}
 	
-	function validate($cfg) {
-		$out = array();
+	private function is_int_in_range($x, $min, $max) {
+		return true;
 		
-		$out['limit'] = absint($cfg['limit']);
-		if ($out['limit'] < 1 || $out['limit'] > 1000) {
-			$out['limit'] = 10;
-			add_settings_error(...);
-		}
-
-		$out = $cfg;
+		if (!is_numeric($x))
+			return false;
+			
+		/* $x = (in
+		return
+			is_numeric($x) &&
+			is_int($x) &&
+			$min <= $x && $x <= $max
+		; */
+	}
+	
+	function validate($in) {
+		$out = $this->get_option();
+		
+		if ($this->is_int_in_range($in['limit'], 1, 1000))
+			$out['limit'] = $in['limit'];
+		else
+			add_settings_error(
+				'jls_limit', 
+				'jls_limit', 
+				'Limit must be an integer in the range [1, 1000]',
+				'error'
+			);
 		
 		return $out;
 	}
@@ -288,6 +304,8 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 }
 
 class ServiceRenderer {
+
+	static $plugin_option_name;
 	
 	function __construct($name, $cfg) {
 		$this->name = $name;
@@ -297,7 +315,7 @@ class ServiceRenderer {
 	function render() {
 		?>
 			<input 
-				name="jls[services][<?php echo $this->name; ?>][user]" 
+				name="<?php echo self::$plugin_option_name; ?>[services][<?php echo $this->name; ?>][user]" 
 				type="text" 
 				value="<?php echo $this->cfg['user']; ?>"
 			>

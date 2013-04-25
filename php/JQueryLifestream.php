@@ -4,8 +4,12 @@ require_once 'JQueryLifestreamBase.php';
 
 final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 
+	private static $plugin_instance;
+
 	function __construct() {
 		parent::__construct(array());
+		
+		self::$plugin_instance = $this;
 		
 		$this->menu_slug = 'jls';
 		$this->settings_group = $this->menu_slug;
@@ -305,6 +309,10 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	
 	function validate_service($service_name, $user) {
 		return true;
+	}
+	
+	static function render() {
+		return self::$plugin_instance->render_lifestream();
 	}
 	
 }

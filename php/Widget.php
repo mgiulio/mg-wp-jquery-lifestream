@@ -23,15 +23,13 @@ class JLSWidget extends WP_Widget {
 	}
 	
 	function widget($args, $instance) {
-		global $mgWPJSL;
-		
 		extract($args);
 		
 		echo $before_widget;
 			echo $before_title;
 				echo "Lifestream";
 			echo $after_title;
-			echo $mgWPJSL->render_lifestream();
+			echo mgJQueryLifestream::render();
 		echo $after_widget;
 	}
 

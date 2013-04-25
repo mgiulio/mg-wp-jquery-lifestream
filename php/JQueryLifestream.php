@@ -274,15 +274,6 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		<?php
 	}
 	
-	private function is_int_in_range($str, $min, $max) {
-		if (!is_numeric($str))
-			return false;
-		$x = $str + 0;
-		if (!is_int($x))
-			return false;
-		return $min <= $x && $x <= $max;
-	}
-	
 	function validate($in) {
 		$out = $this->get_option();
 		

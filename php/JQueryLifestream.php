@@ -299,7 +299,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 				add_settings_error(
 					"jls_services_{$service_name}_user",
 					"jls_services_{$service_name}_user",
-					"$user is not a valide user for service $service_name",
+					"Invalid user name for service $service_name", //"$user is not a valide user for service $service_name",
 					'error'
 				);
 		}
@@ -308,10 +308,21 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	function validate_service($service_name, $user) {
-		if ($user != sanitize_text_field($user))
-			return false;
+		$ok = true;
+		
+		switch ($service_name) {
+			case 'twitter':
+				if (!preg_match('/^[A-Za-z0-9_]{1,15}$/', $user))
+					$ok = false;
+				break;
+			case 'github':
+				break;
+			default:
+				if ($user != sanitize_text_field($user))
+					$ok = false;
+		}
 			
-		return true;
+		return $ok;
 	}
 	
 	static function render() {

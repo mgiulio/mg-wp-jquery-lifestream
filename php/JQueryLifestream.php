@@ -14,7 +14,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		if (is_admin()) {
 			add_action('admin_init', array($this, 'setup_settings'));
 			add_action('admin_menu', array($this, 'setup_menu'));
-			add_action('pre_update_option_jls', array($this, 'regenerate_js'), 10, 2);
+			add_action("pre_update_option_{$this->plugin_option_name}", array($this, 'regenerate_js'));
 			add_filter("plugin_action_links_{$this->main_plugin_file}", array($this, 'setup_plugin_action_links'));
 		}
 		else {
@@ -114,32 +114,34 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		register_widget('JLSWidget');
 	}
 	
-	function regenerate_js($new_value, $old_value) {
-		$services = $new_value['services'];
-		$service_list = array();
+	function regenerate_js($cfg) {
 		$out = '';
-		foreach ($services as $s_name => $s_cfg) {
+		
+		$available_services = $cfg['services'];
+		$stream_services = array();
+		
+		foreach ($available_services as $s_name => $s_cfg) {
 			if (empty($s_cfg['user']))
 				continue;
-			$service_list[] = array(
+			$stream_services[] = array(
 				'service' => $s_name,
 				'user' => $s_cfg['user']
 			);
 			$out .= file_get_contents("{$this->path['js']}jls/src/services/{$s_name}.js");
 		}
 		
-		if (empty($service_list))
-			$new_value['no_services'] = true;
+		if (empty($stream_services))
+			$cfg['no_services'] = true;
 		else {
-			$new_value['no_services'] = false;
+			$cfg['no_services'] = false;
 			$out = file_get_contents("{$this->path['js']}jls/src/core.js") . $out;
-			$js_service_list = json_encode($service_list);
+			$js_service_list = json_encode($stream_services);
 			ob_start();
 			?>
 				(function($) {
 					$(function() {
 						$('.jls_container').lifestream({
-							limit: <?php echo $new_value['limit']; ?>,
+							limit: <?php echo $cfg['limit']; ?>,
 							list: <?php echo $js_service_list; ?>
 						});
 				
@@ -151,7 +153,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 			file_put_contents("{$this->path['js']}jls.js", $out);
 		}
 		
-		return $new_value;
+		return $cfg;
 	}
 	
 	function setup_menu() {
@@ -244,6 +246,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	
 	function render_lifestream() {
 		$cfg = $this->get_option();
+
 		if ($cfg['no_services'])
 			return '';
 			

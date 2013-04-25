@@ -14,7 +14,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		if (is_admin()) {
 			add_action('admin_init', array($this, 'setup_settings'));
 			add_action('admin_menu', array($this, 'setup_menu'));
-			add_action("pre_update_option_jls", array($this, 'regenerate_js'));
+			add_action("pre_update_option_{$this->plugin_option_name}", array($this, 'regenerate_js'));
 			add_filter("plugin_action_links_{$this->main_plugin_file}", array($this, 'setup_plugin_action_links'));
 		}
 		else {

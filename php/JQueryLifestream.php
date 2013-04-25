@@ -14,7 +14,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		if (is_admin()) {
 			add_action('admin_init', array($this, 'setup_settings'));
 			add_action('admin_menu', array($this, 'setup_menu'));
-			add_action('pre_update_option_jls', array($this, 'regenerate_js'), 10, 2);
+			add_action("pre_update_option_jls", array($this, 'regenerate_js'));
 			add_filter("plugin_action_links_{$this->main_plugin_file}", array($this, 'setup_plugin_action_links'));
 		}
 		else {
@@ -114,10 +114,10 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		register_widget('JLSWidget');
 	}
 	
-	function regenerate_js($new_cfg, $old_cfg) {
+	function regenerate_js($cfg) {
 		$out = '';
 		
-		$available_services = $new_cfg['services'];
+		$available_services = $cfg['services'];
 		$stream_services = array();
 		
 		foreach ($available_services as $s_name => $s_cfg) {
@@ -131,9 +131,9 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		}
 		
 		if (empty($stream_services))
-			$new_cfg['no_services'] = true;
+			$cfg['no_services'] = true;
 		else {
-			$new_cfg['no_services'] = false;
+			$cfg['no_services'] = false;
 			$out = file_get_contents("{$this->path['js']}jls/src/core.js") . $out;
 			$js_service_list = json_encode($stream_services);
 			ob_start();
@@ -141,7 +141,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 				(function($) {
 					$(function() {
 						$('.jls_container').lifestream({
-							limit: <?php echo $new_cfg['limit']; ?>,
+							limit: <?php echo $cfg['limit']; ?>,
 							list: <?php echo $js_service_list; ?>
 						});
 				
@@ -153,7 +153,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 			file_put_contents("{$this->path['js']}jls.js", $out);
 		}
 		
-		return $new_cfg;
+		return $cfg;
 	}
 	
 	function setup_menu() {
@@ -246,6 +246,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	
 	function render_lifestream() {
 		$cfg = $this->get_option();
+
 		if ($cfg['no_services'])
 			return '';
 			

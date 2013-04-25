@@ -114,32 +114,34 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		register_widget('JLSWidget');
 	}
 	
-	function regenerate_js($new_value, $old_value) {
-		$services = $new_value['services'];
-		$service_list = array();
+	function regenerate_js($new_cfg, $old_cfg) {
 		$out = '';
-		foreach ($services as $s_name => $s_cfg) {
+		
+		$available_services = $new_cfg['services'];
+		$stream_services = array();
+		
+		foreach ($available_services as $s_name => $s_cfg) {
 			if (empty($s_cfg['user']))
 				continue;
-			$service_list[] = array(
+			$stream_services[] = array(
 				'service' => $s_name,
 				'user' => $s_cfg['user']
 			);
 			$out .= file_get_contents("{$this->path['js']}jls/src/services/{$s_name}.js");
 		}
 		
-		if (empty($service_list))
-			$new_value['no_services'] = true;
+		if (empty($stream_services))
+			$new_cfg['no_services'] = true;
 		else {
-			$new_value['no_services'] = false;
+			$new_cfg['no_services'] = false;
 			$out = file_get_contents("{$this->path['js']}jls/src/core.js") . $out;
-			$js_service_list = json_encode($service_list);
+			$js_service_list = json_encode($stream_services);
 			ob_start();
 			?>
 				(function($) {
 					$(function() {
 						$('.jls_container').lifestream({
-							limit: <?php echo $new_value['limit']; ?>,
+							limit: <?php echo $new_cfg['limit']; ?>,
 							list: <?php echo $js_service_list; ?>
 						});
 				
@@ -151,7 +153,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 			file_put_contents("{$this->path['js']}jls.js", $out);
 		}
 		
-		return $new_value;
+		return $new_cfg;
 	}
 	
 	function setup_menu() {

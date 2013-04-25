@@ -141,7 +141,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 				(function($) {
 					$(function() {
 						$('.jls_container').lifestream({
-							limit: <?php echo $cfg['limit']; ?>,
+							limit: <?php echo esc_js($cfg['limit']); ?>,
 							list: <?php echo $js_service_list; ?>
 						});
 				

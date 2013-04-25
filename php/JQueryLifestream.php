@@ -298,7 +298,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 			
 		foreach ($out['services'] as $service_name => $service_cfg) {
 			$user = $in['services'][$service_name]['user'];
-			if ($this->validate_service[$service_name]($user))
+			if (call_user_func(array($this, 'validate_service'), $service_name, $user))
 				$out['services'][$service_name]['user'] = $user;
 			else
 				add_settings_error(
@@ -310,6 +310,10 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		}
 		
 		return $out;
+	}
+	
+	function validate_service($service_name, $user) {
+		return true;
 	}
 	
 }

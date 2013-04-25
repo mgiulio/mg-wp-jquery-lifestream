@@ -308,6 +308,9 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 	}
 	
 	function validate_service($service_name, $user) {
+		if ($user != sanitize_text_field($user))
+			return false;
+			
 		return true;
 	}
 	

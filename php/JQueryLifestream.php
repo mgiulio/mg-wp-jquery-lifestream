@@ -271,9 +271,9 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		$cfg = $this->get_option();
 		?>
 			<input 
-				name="<?php echo $this->plugin_option_name; ?>[limit]" 
 				type="text" 
-				value="<?php echo $cfg['limit']; ?>"
+				name="<?php echo esc_attr($this->plugin_option_name); ?>[limit]" 
+				value="<?php echo esc_attr($cfg['limit']); ?>"
 			>
 		<?php
 	}
@@ -292,9 +292,14 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 			);
 			
 		foreach ($out['services'] as $service_name => $service_cfg) {
-			$user = $in['services'][$service_name]['user'];
-			if (call_user_func(array($this, 'validate_service'), $service_name, $user))
-				$out['services'][$service_name]['user'] = $user;
+			$user = trim($in['services'][$service_name]['user']);
+			
+			if ($user === '')
+				continue;
+				
+			$sanitized_user = $this->sanitize_service_user($service_name, $user);
+			if ($sanitized_user !== '')
+				$out['services'][$service_name]['user'] = $sanitized_user;
 			else
 				add_settings_error(
 					"jls_services_{$service_name}_user",
@@ -307,22 +312,20 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		return $out;
 	}
 	
-	function validate_service($service_name, $user) {
-		$ok = true;
+	function sanitize_service_user($service_name, $user) {
+		$sanitized_user = $user;
 		
 		switch ($service_name) {
 			case 'twitter':
-				if (!preg_match('/^[A-Za-z0-9_]{1,15}$/', $user))
-					$ok = false;
-				break;
-			case 'github':
+				$sanitized_user = ltrim($sanitized_user, '@');
+				if (!preg_match('/^[A-Za-z0-9_]{1,15}$/', $sanitized_user))
+					$sanitized_user = '';
 				break;
 			default:
-				if ($user != sanitize_text_field($user))
-					$ok = false;
+				$sanitized_user = sanitize_text_field($user);
 		}
 			
-		return $ok;
+		return $sanitized_user;
 	}
 	
 	static function render() {
@@ -343,9 +346,9 @@ class ServiceRenderer {
 	function render() {
 		?>
 			<input 
-				name="<?php echo self::$plugin_option_name; ?>[services][<?php echo $this->name; ?>][user]" 
 				type="text" 
-				value="<?php echo $this->cfg['user']; ?>"
+				name="<?php echo esc_attr(self::$plugin_option_name); ?>[services][<?php echo esc_attr($this->name); ?>][user]" 
+				value="<?php echo esc_attr($this->cfg['user']); ?>"
 			>
 		<?php
 	}

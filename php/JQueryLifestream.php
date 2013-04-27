@@ -15,15 +15,15 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		$this->settings_group = $this->menu_slug;
 		
 		add_action('widgets_init', array($this, 'register_widget'));
+		
 		if (is_admin()) {
 			add_action('admin_init', array($this, 'setup_settings'));
 			add_action('admin_menu', array($this, 'setup_menu'));
 			add_action("pre_update_option_{$this->plugin_option_name}", array($this, 'regenerate_js'));
 			add_filter("plugin_action_links_{$this->main_plugin_file}", array($this, 'setup_plugin_action_links'));
 		}
-		else {
+		else
 			add_shortcode('jls', array($this, 'run_shortcode'));
-		}
 	}
 	
 	function setup_plugin_action_links($actions) {
@@ -118,55 +118,13 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		register_widget('JLSWidget');
 	}
 	
-	function regenerate_js($cfg) {
-		$out = '';
-		
-		$available_services = $cfg['services'];
-		$stream_services = array();
-		
-		foreach ($available_services as $s_name => $s_cfg) {
-			if (empty($s_cfg['user']))
-				continue;
-			$stream_services[] = array(
-				'service' => $s_name,
-				'user' => $s_cfg['user']
-			);
-			$out .= file_get_contents("{$this->path['js']}jls/src/services/{$s_name}.js");
-		}
-		
-		if (empty($stream_services))
-			$cfg['no_services'] = true;
-		else {
-			$cfg['no_services'] = false;
-			$out = file_get_contents("{$this->path['js']}jls/src/core.js") . $out;
-			$js_service_list = json_encode($stream_services);
-			ob_start();
-			?>
-				(function($) {
-					$(function() {
-						$('.jls_container').lifestream({
-							limit: <?php echo esc_js($cfg['limit']); ?>,
-							list: <?php echo $js_service_list; ?>
-						});
-				
-					});
-				})(jQuery);
-			<?php
-			$out .= ob_get_contents();
-			ob_end_clean();
-			file_put_contents("{$this->path['js']}jls.js", $out);
-		}
-		
-		return $cfg;
-	}
-	
 	function setup_menu() {
 		add_options_page(
 			'jQuery Lifestream',
 			'jQuery Lifestream',
 			'manage_options',
 			$this->menu_slug,
-			array($this, 'render_menu_page')
+			array($this, 'render_settings_page')
 		);
 		
 		$this->settings_page_url = admin_url("options-general.php?page={$this->menu_slug}");
@@ -224,7 +182,7 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		echo "Fill in the username for the services you want to include in the lifestream";
 	}
 	
-	function render_menu_page() {
+	function render_settings_page() {
 		if (!current_user_can('manage_options'))  {
 			wp_die(__('You do not have sufficient permissions to access this page.'));
 		}
@@ -242,29 +200,6 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 				
 			</div>
 		<?php
-	}
-	
-	function run_shortcode() {
-		return $this->render_lifestream();
-	}
-	
-	function render_lifestream() {
-		$cfg = $this->get_option();
-
-		if ($cfg['no_services'])
-			return '';
-			
-		wp_enqueue_script(
-			$this->plugin_prefix . 'jls_js',
-			"{$this->url['js']}jls.js",
-			array(),
-			'', 
-			true
-		);
-		
-		$html = '<div class="jls_container"></div>';
-		
-		return $html;
 	}
 	
 	function render_limit() {
@@ -326,6 +261,71 @@ final class mgJQueryLifestream extends mgJQueryLifestreamBase  {
 		}
 			
 		return $sanitized_user;
+	}
+	
+	function regenerate_js($cfg) {
+		$out = '';
+		
+		$available_services = $cfg['services'];
+		$stream_services = array();
+		
+		foreach ($available_services as $s_name => $s_cfg) {
+			if (empty($s_cfg['user']))
+				continue;
+			$stream_services[] = array(
+				'service' => $s_name,
+				'user' => $s_cfg['user']
+			);
+			$out .= file_get_contents("{$this->path['js']}jls/src/services/{$s_name}.js");
+		}
+		
+		if (empty($stream_services))
+			$cfg['no_services'] = true;
+		else {
+			$cfg['no_services'] = false;
+			$out = file_get_contents("{$this->path['js']}jls/src/core.js") . $out;
+			$js_service_list = json_encode($stream_services);
+			ob_start();
+			?>
+				(function($) {
+					$(function() {
+						$('.jls_container').lifestream({
+							limit: <?php echo esc_js($cfg['limit']); ?>,
+							list: <?php echo $js_service_list; ?>
+						});
+				
+					});
+				})(jQuery);
+			<?php
+			$out .= ob_get_contents();
+			ob_end_clean();
+			file_put_contents("{$this->path['js']}jls.js", $out);
+		}
+		
+		return $cfg;
+	}
+	
+	function run_shortcode() {
+		return $this->render_lifestream();
+	}
+	
+	function render_lifestream() {
+		$cfg = $this->get_option();
+
+		if ($cfg['no_services'])
+			return '';
+			
+		wp_enqueue_script(
+			$this->plugin_prefix . 'jls_js',
+			"{$this->url['js']}jls.js",
+			array(),
+			'', 
+			true
+		);
+		
+		$html = '<div class="jls_container"></div>';
+		
+		return $html;
 	}
 	
 	static function render() {

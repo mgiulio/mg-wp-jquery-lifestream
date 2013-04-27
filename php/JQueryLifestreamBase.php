@@ -46,30 +46,6 @@ abstract class mgJQueryLifestreamBase {
 		return get_option($this->plugin_option_name);
 	}
 	
-	protected function is_ajax_request($action) {
-		return
-			defined('DOING_AJAX' ) && 
-			DOING_AJAX &&
-			!empty($_REQUEST['action']) &&
-			$_REQUEST['action'] === $action
-		;
-	}
-	
-	protected function inject_js($script, $params = array()) {
-		$js_handle = $this->plugin_prefix . $script . '_js';
-		
-		wp_enqueue_script(
-			$js_handle,
-			$this->url['js'] . $script . '.js',
-			array('jquery'), 
-			'', 
-			true
-		);
-		
-		if (!empty($params))
-			wp_localize_script($js_handle, $this->plugin_prefix . 'args', $params);
-	}
-	
 	protected function log($x) {
 		if (WP_DEBUG === true) {
 			if (is_array($x) || is_object($x)) {
